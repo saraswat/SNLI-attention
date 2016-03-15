@@ -127,7 +127,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
        for line in f:lines() do
           sentence_num = sentence_num + 1
           local triplet = stringx.split(line, '\t')
-          local label, s1, s2 = triplet[1], triplet[2], triplet[3]
+          local label, s1, s2 = triplet[1], triplet[6], triplet[7]
           labels[split][sentence_num] = BatchLoader.labelToNumber(label) + 1
           -- append tokens in the sentence1
           output_tensors1[split][sentence_num][1] = 2
