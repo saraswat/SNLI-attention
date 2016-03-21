@@ -103,16 +103,21 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
     -- first go through train/valid/test to get max sentence length
     -- also counts the number of sentences
     for	split = 1,3 do -- split = 1 (train), 2 (val), or 3 (test)
+       print('vj: opening file',  input_files[split])
        f = io.open(input_files[split], 'r')       
        local scounts = 0
        for line in f:lines() do
-          scounts = scounts + 1
+          line1 = line:gsub("^%%.*", "comment")
+          if line1=="comment" or line == "" then
+          else 
+             scounts = scounts + 1
+          end
        end
        f:close()
        split_counts[split] = scounts  --the number of sentences in each split
     end
       
-    print(string.format('Token count: train %d, val %d, test %d', 
+    print(string.format('(T,H) pair count: train %d, val %d, test %d', 
     			split_counts[1], split_counts[2], split_counts[3]))
     
     for	split = 1,3 do -- split = 1 (train), 2 (val), or 3 (test)     
@@ -125,33 +130,39 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
        f = io.open(input_files[split], 'r')
        local sentence_num = 0
        for line in f:lines() do
-          sentence_num = sentence_num + 1
-          local triplet = stringx.split(line, '\t')
-          local label, s1, s2 = triplet[1], triplet[6], triplet[7]
-          labels[split][sentence_num] = BatchLoader.labelToNumber(label) + 1
-          -- append tokens in the sentence1
-          output_tensors1[split][sentence_num][1] = 2
-          local word_num = 1
-          for rword in s1:gmatch'([^%s]+)' do
-             word_num = word_num + 1
-             if word2idx[rword]==nil then
-                idx2word[#idx2word + 1] = rword 
-                word2idx[rword] = #idx2word
+          line1 = line:gsub("^%%.*", "comment")
+          if line1=="comment" or line == "" then
+          else 
+             sentence_num = sentence_num + 1
+             local datum = stringx.split(line, '\t')
+             local _, s1, s2, label = datum[1], datum[2], datum[3], datum[4]
+             if label ~='-' then  -- skip entries with -
+                labels[split][sentence_num] = BatchLoader.labelToNumber(label) + 1
+                -- append tokens in the sentence1
+                output_tensors1[split][sentence_num][1] = 2
+                local word_num = 1
+                for rword in s1:gmatch'([^%s]+)' do
+                   word_num = word_num + 1
+                   if word2idx[rword]==nil then
+                      idx2word[#idx2word + 1] = rword 
+                      word2idx[rword] = #idx2word
+                   end
+                   output_tensors1[split][sentence_num][word_num] = word2idx[rword]
+                   if word_num == max_sentence_l then break end
+                end
+                -- append tokens in the sentence2
+                output_tensors2[split][sentence_num][1] = 2
+                word_num = 1
+                for rword in s2:gmatch'([^%s]+)' do
+                   word_num = word_num + 1
+                   if word2idx[rword]==nil then
+                      idx2word[#idx2word + 1] = rword 
+                      word2idx[rword] = #idx2word
+                   end
+                   output_tensors2[split][sentence_num][word_num] = word2idx[rword]
+                   if word_num == max_sentence_l then break end
+                end
              end
-             output_tensors1[split][sentence_num][word_num] = word2idx[rword]
-             if word_num == max_sentence_l then break end
-          end
-          -- append tokens in the sentence2
-          output_tensors2[split][sentence_num][1] = 2
-          word_num = 1
-          for rword in s2:gmatch'([^%s]+)' do
-             word_num = word_num + 1
-             if word2idx[rword]==nil then
-                idx2word[#idx2word + 1] = rword 
-                word2idx[rword] = #idx2word
-             end
-             output_tensors2[split][sentence_num][word_num] = word2idx[rword]
-             if word_num == max_sentence_l then break end
           end
        end
     end
