@@ -3,7 +3,7 @@ require 'nn'
 require 'nngraph'
 require 'rnn'
 model_utils = require 'util.model_utils'
-ScorerBatchloader = require 'util.ScorerBatchloader'
+BatchLoader = require 'util.BatchLoader'
 -- require 'util.MaskedLoss'
 require 'util.misc'
 require 'util.CAveTable'
@@ -55,20 +55,22 @@ if opt.cudnn == 1 then
   require 'cudnn'
 end
 
+restarting_from_checkpoint=true
+print('restoring checkpoint from ' .. opt.checkpoint)
+checkpoint = torch.load(opt.checkpoint)
+this_cmdline_opt = opt
+opt = checkpoint.opt -- thus all options other than checkpoint are ignored from cmdline
+print('restored.')
+
 -- create data loader
-loader = ScorerBatchloader.create(opt.data_dir, opt.max_length, opt.batch_size)
+loader = BatchLoader.createScorer(opt.data_dir, opt.max_length, opt.batch_size)
 opt.seq_length = loader.max_sentence_l 
 opt.vocab_size = #loader.idx2word
 opt.classes = 3
 opt.word2vec = loader.word2vec
+
 -- model
-if opt.checkpoint ~='checkpoint.t7' then
-   print('restoring checkpoint from ' .. opt.checkpoint)
-   checkpoint = torch.load(opt.checkpoint)
-   -- vj: I believe this should be all that is needed to restore the model
-   protos = checkpoint.protos
-   print('restored.')
-end
+protos = checkpoint.protos
 
 -- ship to gpu
 if opt.gpuid >= 0 then
@@ -89,8 +91,8 @@ function get_layer(layer)
   end
 end
 -- vj is this needed for scoring?
--- protos.enc:apply(get_layer)
--- protos.dec:apply(get_layer)
+protos.enc:apply(get_layer)
+protos.dec:apply(get_layer)
 --dec_lookup:share(enc_lookup, 'weight')
 
 -- make a bunch of clones after flattening, as that reallocates memory
@@ -108,12 +110,12 @@ if opt.gpuid >=0 then h_init = h_init:cuda() end
 --evaluation 
 function eval_split()
    print('vj: evaluating')
-  local n = loader.split_size
-  loader:reset_batch_pointer()
+  local n = loader.split_sizes[1]
+  loader:reset_batch_pointer(1)
   local correct_count = 0
   for i = 1,n do
     -- load data
-    local x, y, label = loader:next_batch()
+    local x, y, label = loader:next_batch(1)
     if opt.gpuid >= 0 then
       x = x:float():cuda()
       y = y:float():cuda()
@@ -150,6 +152,10 @@ function eval_split()
     -- 3) classification
     protos.classifier:evaluate()
     local prediction = protos.classifier:forward({rnn_h_enc, rnn_h_dec})
+    if ( 0 == (i%50)) then
+       print('prediction ', prediction)
+       print('i=', i, ' prediction=', indice[1][1], ' label=', label[1])
+    end
     local max,indice = prediction:max(2)   -- indice is a 2d tensor here, we need to flatten it...
     if indice[1][1] == label[1] then correct_count = correct_count + 1 end
   end

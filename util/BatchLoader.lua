@@ -28,15 +28,45 @@ function BatchLoader.labelToNumber(label)
    return -1
 end
 
+-- vj: Hmm. There are two reasonable strategies for dealing with the
+-- input data (train, dev, test). Either we store the loader in the
+-- checkpoint ... this makes the checkpoint big, and we have to store
+-- the extra data each time on disk. And we don't need the data when 
+-- building a scoring engine from a checkpoint.
+-- Or we do not checkpoint the input state (train, dev, test T, H and label tensors, 
+-- idx2word, word2idx,  w2v, but build them afresh from data that is already on 
+-- disk when we restart after a checkpoint. 
+-- I believe we should use the second strategy.
+-- Currently, the checkpoint stores opt. This contains word2vec.
+-- It also separately stores idx2word and word2idx (in vocab). 
+-- for now ignore this state from checkpoint, and just rebuild from scratch
+function BatchLoader.recreate(checkpoint) 
+   local o=checkpoint.opt
+   return BatchLoader.create(o.data_dir, o.max_length, o.batch_size)
+end
+
+function BatchLoader.createScorer(data_dir, max_sentence_l, batch_size) 
+--  local train_file = path.join(data_dir, 'train.txt')
+--  local valid_file = path.join(data_dir, 'dev.txt')
+    local test_file = path.join(data_dir, 'test.txt')
+--  local input_files = {train_file, valid_file, test_file}
+    local input_files = {test_file}
+    local input_w2v = path.join(data_dir, 'word2vec.txt')
+    return BatchLoader.body(data_dir, max_sentence_l, batch_size, input_files, input_w2v)
+end
+
 function BatchLoader.create(data_dir, max_sentence_l , batch_size)
-    local self = {}
-    setmetatable(self, BatchLoader)
     local train_file = path.join(data_dir, 'train.txt')
     local valid_file = path.join(data_dir, 'dev.txt')
     local test_file = path.join(data_dir, 'test.txt')
     local input_files = {train_file, valid_file, test_file}
     local input_w2v = path.join(data_dir, 'word2vec.txt')
-    
+    return BatchLoader.body(data_dir, max_sentence_l, batch_size, input_files, input_w2v)
+end
+
+function BatchLoader.body(data_dir, max_sentence_l , batch_size, input_files, input_w2v)
+    local self = {}
+    setmetatable(self, BatchLoader)
 
     -- construct a tensor with all the data
     local s1, s2, label, idx2word, word2idx, word2vec = BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
@@ -49,7 +79,7 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size)
  
     print(string.format('Word vocab size: %d', #self.idx2word))
     -- cut off the end for train/valid sets so that it divides evenly
-    for split=1,3 do
+    for split=1,#input_files do
        local s1data = s1[split]
        local s2data = s2[split]
        local label_data = label[split]
@@ -69,25 +99,29 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size)
     end
  
     self.batch_idx = {0,0,0}
-    print(string.format('data load done. Number of batches in train: %d, val: %d, test: %d', self.split_sizes[1], self.split_sizes[2], self.split_sizes[3]))
+    if #input_files==3 then
+       print(string.format('data load done. Number of batches in train: %d, val: %d, test: %d', self.split_sizes[1], self.split_sizes[2], self.split_sizes[3]))
+    else
+       print(string.format('data load done. Number of batches in test: %d', self.split_sizes[1]))
+    end
     collectgarbage()
     return self
 end
 
 function BatchLoader:reset_batch_pointer(split_idx, batch_idx)
-    batch_idx = batch_idx or 0
-    self.batch_idx[split_idx] = batch_idx
+   batch_idx = batch_idx or 0
+   self.batch_idx[split_idx] = batch_idx
 end
 
 function BatchLoader:next_batch(split_idx)
     -- split_idx is integer: 1 = train, 2 = val, 3 = test
-    self.batch_idx[split_idx] = self.batch_idx[split_idx] + 1
-    if self.batch_idx[split_idx] > self.split_sizes[split_idx] then
-        self.batch_idx[split_idx] = 1 -- cycle around to beginning
-    end
-    -- pull out the correct next batch
-    local idx = self.batch_idx[split_idx]
-    return self.all_batches[split_idx][1][idx], self.all_batches[split_idx][2][idx], self.all_batches[split_idx][3][idx]
+   self.batch_idx[split_idx] = self.batch_idx[split_idx] + 1
+   if self.batch_idx[split_idx] > self.split_sizes[split_idx] then
+      self.batch_idx[split_idx] = 1 -- cycle around to beginning
+   end
+   -- pull out the correct next batch
+   local idx = self.batch_idx[split_idx]
+   return self.all_batches[split_idx][1][idx], self.all_batches[split_idx][2][idx], self.all_batches[split_idx][3][idx]
 end
 
 -- vj: produces
@@ -111,7 +145,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
     local labels = {}
     -- first go through train/valid/test to get max sentence length
     -- also counts the number of sentences
-    for	split = 1,3 do -- split = 1 (train), 2 (val), or 3 (test)
+    for	split = 1,#input_files do -- split = 1 (train), 2 (val), or 3 (test)
        print('vj: opening file',  input_files[split])
        f = io.open(input_files[split], 'r')       
        local scounts = 0
@@ -125,11 +159,16 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
        f:close()
        split_counts[split] = scounts  --the number of sentences in each split
     end
-      
-    print(string.format('(T,H) pair count: train %d, val %d, test %d', 
-    			split_counts[1], split_counts[2], split_counts[3]))
+
+    if #input_files ==3 then
+       print(string.format('(T,H) pair count: train %d, val %d, test %d', 
+                           split_counts[1], split_counts[2], split_counts[3]))
+    else
+       print(string.format('(T,H) pair count: test %d', split_counts[1]))
+    end
     
-    for	split = 1,3 do -- split = 1 (train), 2 (val), or 3 (test)     
+    for	split = 1,#input_files do 
+       -- split = 1 (train), 2 (val), or 3 (test)     
        -- Preallocate the tensors we will need.
        -- Watch out the second one needs a lot of RAM.
 
@@ -162,7 +201,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
                    end
                    output_tensors1[split][sentence_num][word_num] = word2idx[rword]
                    if word_num == max_sentence_l then break end
-                endp
+                end
                 -- append tokens in the sentence2
                 output_tensors2[split][sentence_num][1] = 2
                 word_num = 1
