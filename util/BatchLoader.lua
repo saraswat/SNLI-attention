@@ -90,6 +90,15 @@ function BatchLoader:next_batch(split_idx)
     return self.all_batches[split_idx][1][idx], self.all_batches[split_idx][2][idx], self.all_batches[split_idx][3][idx]
 end
 
+-- vj: produces
+-- output_tensors1[split][s][k] is the index of the k'th word in the s'th
+-- sentence of the split file (1-train, 2-validation, 3-test) for T
+-- output_tensors2, same, for H
+-- labels[split][s] is the label for the data point
+-- idx2word is the mapping from index to word
+-- word2idx is the mapping from words to index
+-- w2v is the mapping from index to the vector (embedding) for the word
+
 function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
     print('Processing text into tensors...')
     local f
@@ -123,6 +132,9 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
     for	split = 1,3 do -- split = 1 (train), 2 (val), or 3 (test)     
        -- Preallocate the tensors we will need.
        -- Watch out the second one needs a lot of RAM.
+
+       -- vj: why is the value in the tensor a long, not an int?
+
        output_tensors1[split] = torch.ones(split_counts[split], max_sentence_l):long() 
        output_tensors2[split] = torch.ones(split_counts[split], max_sentence_l):long() 
        labels[split] = torch.zeros(split_counts[split]):long() 
@@ -132,6 +144,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
        for line in f:lines() do
           line1 = line:gsub("^%%.*", "comment")
           if line1=="comment" or line == "" then
+             --ignore comment and blank lines
           else 
              sentence_num = sentence_num + 1
              local datum = stringx.split(line, '\t')
@@ -139,7 +152,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
              if label ~='-' then  -- skip entries with -
                 labels[split][sentence_num] = BatchLoader.labelToNumber(label) + 1
                 -- append tokens in the sentence1
-                output_tensors1[split][sentence_num][1] = 2
+                output_tensors1[split][sentence_num][1] = 2 -- vj: 'START'
                 local word_num = 1
                 for rword in s1:gmatch'([^%s]+)' do
                    word_num = word_num + 1
@@ -149,7 +162,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
                    end
                    output_tensors1[split][sentence_num][word_num] = word2idx[rword]
                    if word_num == max_sentence_l then break end
-                end
+                endp
                 -- append tokens in the sentence2
                 output_tensors2[split][sentence_num][1] = 2
                 word_num = 1
@@ -166,7 +179,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
           end
        end
     end
-
+    -- vj: load up w2v[i] with the 300-long word-vector for the word whose index is i
     local w2v = {}
     local w2v_file = io.open(input_w2v, 'r')
     for line in w2v_file:lines() do
