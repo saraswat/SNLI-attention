@@ -17,7 +17,7 @@ cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Options')
 cmd:option('-data_dir', 'data', 'path of the dataset')
-cmd:option('-batch_size', '16', 'number of batches')
+cmd:option('-batch_size', '16', 'size of mini-batch')
 cmd:option('-max_epochs', 4, 'number of full passes through the training data')
 cmd:option('-rnn_size', 400, 'dimensionality of sentence embeddings')
 cmd:option('-word_vec_size', 300, 'dimensionality of word embeddings')
@@ -29,6 +29,7 @@ cmd:option('-save_every', 12500, 'save epoch')
 cmd:option('-checkpoint_dir', 'cv4', 'output directory where checkpoints get written')
 cmd:option('-savefile','model','filename to autosave the checkpont to. Will be inside checkpoint_dir/')
 cmd:option('-checkpoint', 'checkpoint.t7', 'start from a checkpoint if a valid checkpoint.t7 file is given')
+cmd:option('-score_file', '', 'file of observations to run scorer on')
 cmd:option('-learningRate', 0.001, 'learning rate')
 cmd:option('-beta1', 0.9, 'momentum parameter 1')
 cmd:option('-beta2', 0.999, 'momentum parameter 2')
@@ -45,7 +46,6 @@ cmd:text()
 -- parse input params
 opt = cmd:parse(arg)
 torch.manualSeed(opt.seed)
-
 -- load necessary packages depending on config options
 if opt.gpuid >= 0 then
    print('using CUDA on GPU ' .. opt.gpuid .. '...')
@@ -59,18 +59,49 @@ if opt.cudnn == 1 then
   require 'cudnn'
 end
 
+restarting_from_checkpoint=false
+this_cmdline_opt = opt
+if opt.checkpoint ~='checkpoint.t7' then
+   restarting_from_checkpoint=true
+   print('restoring checkpoint from ' .. opt.checkpoint)
+   checkpoint = torch.load(opt.checkpoint)
+   opt = checkpoint.opt -- thus all options other than checkpoint are ignored from cmdline
+   print('restored.')
+end
+local scoring=false
+if (this_cmdline_opt.score_file ~= '') then
+   scoring=true
+   print('scoring ', this_cmdline_opt.score_file)
+end
 -- create data loader
-loader = BatchLoader.create(opt.data_dir, opt.max_length, opt.batch_size)
-opt.seq_length = loader.max_sentence_l 
-opt.vocab_size = #loader.idx2word
-opt.classes = 3
-opt.word2vec = loader.word2vec
+if restarting_from_checkpoint then
+   if scoring then
+      loader = BatchLoader.createScorer(checkpoint, this_cmdline_opt.score_file)
+   else
+      loader = BatchLoader.recreate(checkpoint)
+   end
+else 
+   loader = BatchLoader.create(opt.data_dir, opt.max_length, opt.batch_size)
+   opt.seq_length = loader.max_sentence_l 
+   opt.vocab_size = #loader.idx2word
+   opt.classes = 3
+   -- don't store word2vec in opt so it is not stored out on disk in checkpoint
+   --   opt.word2vec = loader.word2vec
+end
+
 -- model
-protos = {}
-protos.enc = encoder.lstmn(opt.vocab_size, opt.rnn_size, opt.dropout, opt.word_vec_size, opt.batch_size, opt.word2vec)
-protos.dec = decoder.lstmn(opt.vocab_size, opt.rnn_size, opt.dropout, opt.word_vec_size, opt.batch_size, opt.word2vec)
-protos.criterion = nn.ClassNLLCriterion()
-protos.classifier = classifier_simple.classifier(opt.rnn_size, opt.dropout, opt.classes)
+
+if restarting_from_checkpoint then
+   -- vj: I believe this should be all that is needed to restore the model
+   protos = checkpoint.protos
+else 
+   protos = {}
+   protos.enc = encoder.lstmn(opt.vocab_size, opt.rnn_size, opt.dropout, opt.word_vec_size, opt.batch_size, loader.word2vec) -- was opt.word2vec
+   protos.dec = decoder.lstmn(opt.vocab_size, opt.rnn_size, opt.dropout, opt.word_vec_size, opt.batch_size, loader.word2vec) -- was opt.word2vec
+   protos.criterion = nn.ClassNLLCriterion()
+   protos.classifier = classifier_simple.classifier(opt.rnn_size, opt.dropout, opt.classes)
+end
+
 -- ship to gpu
 if opt.gpuid >= 0 then
   for k,v in pairs(protos) do v:cuda() end
@@ -88,6 +119,10 @@ function get_layer(layer)
     end
   end
 end
+
+-- vj: not sure. Does this need to be executed when
+-- restarting? Seems like it is only used during training
+-- and is probably harmless
 protos.enc:apply(get_layer)
 protos.dec:apply(get_layer)
 --dec_lookup:share(enc_lookup, 'weight')
@@ -107,7 +142,7 @@ if opt.gpuid >=0 then h_init = h_init:cuda() end
 
 --evaluation 
 function eval_split(split_idx)
-  print('evaluating loss over split index ' .. split_idx)
+  print('evaluating accuracy over split index ' .. split_idx)
   local n = loader.split_sizes[split_idx]
   loader:reset_batch_pointer(split_idx)
   local correct_count = 0
@@ -151,9 +186,11 @@ function eval_split(split_idx)
     protos.classifier:evaluate()
     local prediction = protos.classifier:forward({rnn_h_enc, rnn_h_dec})
     local max,indice = prediction:max(2)   -- indice is a 2d tensor here, we need to flatten it...
-    if indice[1][1] == label[1] then correct_count = correct_count + 1 end
+    for i=1, opt.batch_size do
+       if indice[i][1] == label[i] then correct_count = correct_count + 1 end
+    end
   end
-  return correct_count*1.0/n
+  return correct_count*1.0/(n*opt.batch_size)
 end
 
 --training
@@ -255,62 +292,81 @@ end
 -- end of feval 
 
 -- start training
-train_losses = {}
-val_losses = {}
-local optim_state = {learningRate = opt.learningRate, beta1 = opt.beta1, beta2 = opt.beta2}
-local iterations = opt.max_epochs * loader.split_sizes[1]
-for i = 1, iterations do
-  -- train 
-  local epoch = i / loader.split_sizes[1]
-  local timer = torch.Timer()
-  local time = timer:time().real
-  local _, loss = optim.adam(feval, params, optim_state)
-  train_losses[i] = loss[1]
-  if i % opt.print_every == 0 then
-    print(string.format("%d/%d (epoch %.2f), train_loss = %6.4f", i, iterations, epoch, train_losses[i]))
-  end
+function training() 
+   if restarting_from_checkpoint then
+      train_losses = checkpoint.train_losses
+      val_losses = checkpoint.val_losses
+   else 
+      train_losses = {}
+      val_losses = {}
+   end
 
-  -- validate and save checkpoints
-  if epoch == opt.max_epochs or i % opt.save_every == 0 then
-    print ('evaluate on validation set')
-    local val_loss = eval_split(2) -- 2 = validation
-    print (val_loss)
-    if epoch>1.5 then
-      local test_loss = eval_split(3) -- 3 = test
-      print (test_loss)
-    end
-    val_losses[#val_losses+1] = val_loss
-    local savefile = string.format('%s/model_%s_epoch%.2f_%.2f.t7', opt.checkpoint_dir, opt.savefile, epoch, val_loss)
-    local checkpoint = {}
-    checkpoint.protos = protos
-    checkpoint.opt = opt
-    checkpoint.train_losses = train_losses
-    checkpoint.val_losses = val_losses
-    checkpoint.vocab = {loader.idx2word, loader.word2idx}
-    print('saving checkpoint to ' .. savefile)
-    torch.save(savefile, checkpoint)
-  end
+   local optim_state = {learningRate = opt.learningRate, beta1 = opt.beta1, beta2 = opt.beta2}
+   local iterations = this_cmdline_opt.max_epochs * loader.split_sizes[1]
+   start_iterations=1
+   if restarting_from_checkpoint then
+      start_iterations = checkpoint.train_next_iter or 1
+   end
+   for i = start_iterations, iterations do
+      -- train 
+      local epoch = i / loader.split_sizes[1]
+      local timer = torch.Timer()
+      local time = timer:time().real
+      local _, loss = optim.adam(feval, params, optim_state)
+      train_losses[i] = loss[1]
+      if i % opt.print_every == 0 then
+         print(string.format("%d/%d (epoch %.2f), train_loss = %6.4f", i, iterations, epoch, train_losses[i]))
+      end
 
-  -- decay learning rate
-  if i % loader.split_sizes[1] == 0 and #val_losses > 2 then
-    if val_losses[#val_losses-1] - val_losses[#val_losses] < opt.decay_when then
-      opt.learningRate = opt.learningRate * opt.decayRate
-    end
-  end
+      -- validate and save checkpoints
+      if epoch == opt.max_epochs or i % opt.save_every == 0 then
+         print ('evaluate on validation set')
+         local val_loss = eval_split(2) -- 2 = validation
+         print (val_loss)
+         if epoch>1.5 then
+            local test_loss = eval_split(3) -- 3 = test
+            print (test_loss)
+         end
+         val_losses[#val_losses+1] = val_loss
+         local savefile = string.format('%s/model_%s_epoch%.2f_%.2f.t7', opt.checkpoint_dir, opt.savefile, epoch, val_loss)
+         local checkpoint = {}
+         checkpoint.protos = protos
+         checkpoint.opt = opt
+         checkpoint.train_next_iter = i+1
+         checkpoint.train_losses = train_losses
+         checkpoint.val_losses = val_losses
+         -- vj: Don't store this, recreate on startup
+         --    checkpoint.vocab = {loader.idx2word, loader.word2idx}
+         print('saving checkpoint to ' .. savefile)
+         torch.save(savefile, checkpoint)
+      end
 
-  -- index 1 is zero
-  enc_lookup.weight[1]:zero()
-  enc_lookup.gradWeight[1]:zero()
-  dec_lookup.weight[1]:zero()
-  dec_lookup.gradWeight[1]:zero()
+      -- decay learning rate
+      if i % loader.split_sizes[1] == 0 and #val_losses > 2 then
+         if val_losses[#val_losses-1] - val_losses[#val_losses] < opt.decay_when then
+            opt.learningRate = opt.learningRate * opt.decayRate
+         end
+      end
 
-  -- misc
-  if i%5==0 then collectgarbage() end
-  if opt.time ~= 0 then
-     print("Batch Time:", timer:time().real - time)
-  end
+      -- index 1 is zero
+      enc_lookup.weight[1]:zero()
+      enc_lookup.gradWeight[1]:zero()
+      dec_lookup.weight[1]:zero()
+      dec_lookup.gradWeight[1]:zero()
+
+      -- misc
+      if i%5==0 then collectgarbage() end
+      if opt.time ~= 0 then
+         print("Batch Time:", timer:time().real - time)
+      end
+   end
 end
 
 -- end with test
-test_loss = eval_split(3)
+if scoring then 
+   test_loss = eval_split(1)
+else 
+   train() 
+   test_loss = eval_split(3)
+end
 print (string.format("test_loss = %6.4f", test_loss))

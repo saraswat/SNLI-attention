@@ -45,14 +45,10 @@ function BatchLoader.recreate(checkpoint)
    return BatchLoader.create(o.data_dir, o.max_length, o.batch_size)
 end
 
-function BatchLoader.createScorer(data_dir, max_sentence_l, batch_size) 
---  local train_file = path.join(data_dir, 'train.txt')
---  local valid_file = path.join(data_dir, 'dev.txt')
-    local test_file = path.join(data_dir, 'test.txt')
---  local input_files = {train_file, valid_file, test_file}
-    local input_files = {test_file}
-    local input_w2v = path.join(data_dir, 'word2vec.txt')
-    return BatchLoader.body(data_dir, max_sentence_l, batch_size, input_files, input_w2v)
+function BatchLoader.createScorer(checkpoint, score_file) 
+    local o=checkpoint.opt
+    local input_w2v = path.join(o.data_dir, 'word2vec.txt')
+    return BatchLoader.body(o.data_dir, o.max_length, o.batch_size, {score_file}, input_w2v)
 end
 
 function BatchLoader.create(data_dir, max_sentence_l , batch_size)
