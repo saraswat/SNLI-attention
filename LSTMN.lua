@@ -292,7 +292,7 @@ end
 -- end of feval 
 
 -- start training
-function training() 
+function train() 
    if restarting_from_checkpoint then
       train_losses = checkpoint.train_losses
       val_losses = checkpoint.val_losses
@@ -335,8 +335,7 @@ function training()
          checkpoint.train_next_iter = i+1
          checkpoint.train_losses = train_losses
          checkpoint.val_losses = val_losses
-         -- vj: Don't store this, recreate on startup
-         --    checkpoint.vocab = {loader.idx2word, loader.word2idx}
+         checkpoint.vocab = {loader.idx2word, loader.word2idx}
          print('saving checkpoint to ' .. savefile)
          torch.save(savefile, checkpoint)
       end

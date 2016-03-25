@@ -2,7 +2,6 @@ local BatchLoader = {}
 local stringx = require('pl.stringx')
 BatchLoader.__index = BatchLoader
 
-
 function BatchLoader.labelToNumber(label)
    local result
    if label == '-' then
@@ -47,8 +46,16 @@ end
 
 function BatchLoader.createScorer(checkpoint, score_file) 
     local o=checkpoint.opt
-    local input_w2v = path.join(o.data_dir, 'word2vec.txt')
-    return BatchLoader.body(o.data_dir, o.max_length, o.batch_size, {score_file}, input_w2v)
+    local input_files = {score_file}
+    local self = {}
+    setmetatable(self, BatchLoader)
+    local s1, s2, label  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab)
+    -- Once tensors are created, you no longer need idx2word and word2idx
+    self.idx2word = checkpoint.vocab[1]
+    self.word2idx = checkpoint.vocab[2]
+    --    self.vocab_size = #self.idx2word -- not really needed
+    --    self.word2vec = word2vec
+    return BatchLoader.make_all_batches(self, o.batch_size, s1, s2, label, #input_files)
 end
 
 function BatchLoader.create(data_dir, max_sentence_l , batch_size)
@@ -57,25 +64,25 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size)
     local test_file = path.join(data_dir, 'test.txt')
     local input_files = {train_file, valid_file, test_file}
     local input_w2v = path.join(data_dir, 'word2vec.txt')
-    return BatchLoader.body(data_dir, max_sentence_l, batch_size, input_files, input_w2v)
-end
-
-function BatchLoader.body(data_dir, max_sentence_l , batch_size, input_files, input_w2v)
     local self = {}
     setmetatable(self, BatchLoader)
-
-    -- construct a tensor with all the data
-    local s1, s2, label, idx2word, word2idx, word2vec = BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
-    self.max_sentence_l = max_sentence_l
-    self.idx2word, self.word2idx = idx2word, word2idx
+    local s1, s2, label, idx2word, word2idx = BatchLoader.text_to_tensor(input_files, max_sentence_l, nil)
+    self.max_sentence_l = max_sentence_l -- vj, I don't think this is needed.
+    self.idx2word, self.word2idx = idx2word, word2idx -- record it, because we will need to checkpoint this
     self.vocab_size = #self.idx2word 
-    self.word2vec = word2vec
+    self.word2vec = load_wordvecs(input_w2v, word2idx)
+    return BatchLoader.make_all_batches(self, batch_size, s1, s2, label, #input_files)
+end
+
+function BatchLoader.make_all_batches(self, batch_size, s1, s2, label, num_input_files)
+    -- construct a tensor with all the data
+
     self.split_sizes = {}
     self.all_batches = {}
  
     print(string.format('Word vocab size: %d', #self.idx2word))
     -- cut off the end for train/valid sets so that it divides evenly
-    for split=1,#input_files do
+    for split=1,num_input_files do
        local s1data = s1[split]
        local s2data = s2[split]
        local label_data = label[split]
@@ -95,29 +102,13 @@ function BatchLoader.body(data_dir, max_sentence_l , batch_size, input_files, in
     end
  
     self.batch_idx = {0,0,0}
-    if #input_files==3 then
+    if num_input_files==3 then
        print(string.format('data load done. Number of batches in train: %d, val: %d, test: %d', self.split_sizes[1], self.split_sizes[2], self.split_sizes[3]))
     else
        print(string.format('data load done. Number of batches in test: %d', self.split_sizes[1]))
     end
     collectgarbage()
     return self
-end
-
-function BatchLoader:reset_batch_pointer(split_idx, batch_idx)
-   batch_idx = batch_idx or 0
-   self.batch_idx[split_idx] = batch_idx
-end
-
-function BatchLoader:next_batch(split_idx)
-    -- split_idx is integer: 1 = train, 2 = val, 3 = test
-   self.batch_idx[split_idx] = self.batch_idx[split_idx] + 1
-   if self.batch_idx[split_idx] > self.split_sizes[split_idx] then
-      self.batch_idx[split_idx] = 1 -- cycle around to beginning
-   end
-   -- pull out the correct next batch
-   local idx = self.batch_idx[split_idx]
-   return self.all_batches[split_idx][1][idx], self.all_batches[split_idx][2][idx], self.all_batches[split_idx][3][idx]
 end
 
 -- vj: produces
@@ -127,14 +118,28 @@ end
 -- labels[split][s] is the label for the data point
 -- idx2word is the mapping from index to word
 -- word2idx is the mapping from words to index
--- w2v is the mapping from index to the vector (embedding) for the word
+--once tensors are produced from input text files, word2idx (and idx2word) are not needed
+-- the model represents a sentence as a sequence of word indices, and has the mapping 
+-- from word index to the corresponding embedding vector(word_vector)
 
-function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
+function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
     print('Processing text into tensors...')
+
+    -- vocab is nil when running cold (not from a checkpoint)
+    -- then this routine has to build up id2word and word2idx
+    local scoring = vocab ~=nil
     local f
     local vocab_count = {} -- vocab count 
-    local idx2word = {'ZERO', 'START'} 
-    local word2idx = {}; word2idx['ZERO'] = 1; word2idx['START'] = 2
+    local idx2word, word2idx
+    if scoring then
+       idx2word = vocab[1]
+       word2idx = vocab[2]
+    else 
+       idx2word = {'ZERO', 'START'} 
+       word2idx = {}; word2idx['ZERO'] = 1; word2idx['START'] = 2
+    end
+    -- vj we need to add an 'UNK' word for oov words. 
+
     local split_counts = {}
     local output_tensors1 = {}  --for sentence1
     local output_tensors2 = {}  -- for sentence2
@@ -192,8 +197,13 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
                 for rword in s1:gmatch'([^%s]+)' do
                    word_num = word_num + 1
                    if word2idx[rword]==nil then
-                      idx2word[#idx2word + 1] = rword 
-                      word2idx[rword] = #idx2word
+                      if scoring then
+                         print('oov word ', rword, 'replacing with zero for now')
+                         rword = 'ZERO'
+                      else
+                         idx2word[#idx2word + 1] = rword 
+                         word2idx[rword] = #idx2word
+                      end
                    end
                    output_tensors1[split][sentence_num][word_num] = word2idx[rword]
                    if word_num == max_sentence_l then break end
@@ -204,8 +214,13 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
                 for rword in s2:gmatch'([^%s]+)' do
                    word_num = word_num + 1
                    if word2idx[rword]==nil then
-                      idx2word[#idx2word + 1] = rword 
-                      word2idx[rword] = #idx2word
+                      if scoring then
+                         print('oov word ', rword, 'replacing with zero for now')
+                         rword = 'ZERO'
+                      else 
+                         idx2word[#idx2word + 1] = rword 
+                         word2idx[rword] = #idx2word
+                      end
                    end
                    output_tensors2[split][sentence_num][word_num] = word2idx[rword]
                    if word_num == max_sentence_l then break end
@@ -214,23 +229,45 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, input_w2v)
           end
        end
     end
-    -- vj: load up w2v[i] with the 300-long word-vector for the word whose index is i
-    local w2v = {}
-    local w2v_file = io.open(input_w2v, 'r')
-    for line in w2v_file:lines() do
-        tokens = stringx.split(line, ' ')
-        word = tokens[1]
-        if word2idx[word] ~= nil then
-            w2v[word2idx[word]] = torch.zeros(300) 
-            for tid=2,301 do
-                w2v[word2idx[word]][tid-1] = tonumber(tokens[tid])
-            end
-        end
-    end
-    w2v_file:close()
-
-    return output_tensors1, output_tensors2, labels, idx2word, word2idx, w2v
+    return output_tensors1, output_tensors2, labels, idx2word, word2idx
 end
+
+function load_wordvecs(input_w2v, word2idx) 
+   -- vj: load up w2v[i] with the 300-long word-vector for the word whose index is i
+   print('loading word vecs...')
+   local w2v = {}
+   local w2v_file = io.open(input_w2v, 'r')
+   for line in w2v_file:lines() do
+      tokens = stringx.split(line, ' ')
+      word = tokens[1]
+      if word2idx[word] ~= nil then
+         w2v[word2idx[word]] = torch.zeros(300) 
+         for tid=2,301 do
+            w2v[word2idx[word]][tid-1] = tonumber(tokens[tid])
+         end
+      end
+   end
+   w2v_file:close()
+   print('...loaded')
+   return w2v
+end
+
+function BatchLoader:reset_batch_pointer(split_idx, batch_idx)
+   batch_idx = batch_idx or 0
+   self.batch_idx[split_idx] = batch_idx
+end
+
+function BatchLoader:next_batch(split_idx)
+    -- split_idx is integer: 1 = train, 2 = val, 3 = test
+   self.batch_idx[split_idx] = self.batch_idx[split_idx] + 1
+   if self.batch_idx[split_idx] > self.split_sizes[split_idx] then
+      self.batch_idx[split_idx] = 1 -- cycle around to beginning
+   end
+   -- pull out the correct next batch
+   local idx = self.batch_idx[split_idx]
+   return self.all_batches[split_idx][1][idx], self.all_batches[split_idx][2][idx], self.all_batches[split_idx][3][idx]
+end
+
 
 return BatchLoader
 
