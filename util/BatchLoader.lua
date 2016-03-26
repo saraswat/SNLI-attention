@@ -49,16 +49,16 @@ function BatchLoader.createScorer(checkpoint, score_file)
     local input_files = {score_file}
     local self = {}
     setmetatable(self, BatchLoader)
-    local s1, s2, label  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab)
+    local s1, s2, label, idx2word, word2idx  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab)
     -- Once tensors are created, you no longer need idx2word and word2idx
-    self.idx2word = checkpoint.vocab[1]
-    self.word2idx = checkpoint.vocab[2]
-    --    self.vocab_size = #self.idx2word -- not really needed
-    --    self.word2vec = word2vec
+    self.idx2word = idx2word
+    self.word2idx = word2idx
+    self.vocab_size = #self.idx2word 
+    self.word2vec = load_wordvecs(input_w2v, word2idx)
     return BatchLoader.make_all_batches(self, o.batch_size, s1, s2, label, #input_files)
 end
 
-function BatchLoader.create(data_dir, max_sentence_l , batch_size)
+function BatchLoader.create(data_dir, max_sentence_l , batch_size, vocab_files)
     local train_file = path.join(data_dir, 'train.txt')
     local valid_file = path.join(data_dir, 'dev.txt')
     local test_file = path.join(data_dir, 'test.txt')
@@ -68,8 +68,12 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size)
     setmetatable(self, BatchLoader)
     local s1, s2, label, idx2word, word2idx = BatchLoader.text_to_tensor(input_files, max_sentence_l, nil)
     self.max_sentence_l = max_sentence_l -- vj, I don't think this is needed.
+    if vocab_files ~= nil then
+       idx2word, word2idx = ingest_vocab_words(vocab_files, idx2word, word2idx)
+    end
     self.idx2word, self.word2idx = idx2word, word2idx -- record it, because we will need to checkpoint this
     self.vocab_size = #self.idx2word 
+
     self.word2vec = load_wordvecs(input_w2v, word2idx)
     return BatchLoader.make_all_batches(self, batch_size, s1, s2, label, #input_files)
 end
@@ -200,7 +204,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
                       if scoring then
                          print('oov word ', rword, 'replacing with zero for now')
                          rword = 'ZERO'
-                      else
+                      else 
                          idx2word[#idx2word + 1] = rword 
                          word2idx[rword] = #idx2word
                       end
@@ -228,8 +232,48 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
              end
           end
        end
+       f:close()
     end
     return output_tensors1, output_tensors2, labels, idx2word, word2idx
+end
+
+-- read the named files (csi format), parse for words in T and H
+-- add them to word2idx (and idx2word). do not build tensors.
+-- this is called when we wish to bulk up word2idx with words that might be
+-- encountered during scoring.
+function ingest_vocab_words(vocab_files, idx2word, word2idx) 
+   print('loading vocab files...')
+   x = stringx.split(vocab_files, ' ')
+   for	_, file in pairs(x) do
+      print('ingesting from ', file)
+       f = io.open(file, 'r')
+       for line in f:lines() do
+          line1 = line:gsub("^%%.*", "comment")
+          if line1=="comment" or line == "" then
+             --ignore comment and blank lines
+          else 
+             local datum = stringx.split(line, '\t')
+             local s1, s2 =  datum[2], datum[3] 
+             if label ~='-' then  -- skip entries with -
+                for rword in s1:gmatch'([^%s]+)' do
+                   if word2idx[rword]==nil then
+                         idx2word[#idx2word + 1] = rword 
+                         word2idx[rword] = #idx2word
+                   end
+                end
+                for rword in s2:gmatch'([^%s]+)' do
+                   if word2idx[rword]==nil then
+                         idx2word[#idx2word + 1] = rword 
+                         word2idx[rword] = #idx2word
+                   end
+                end
+             end
+          end
+       end
+       f:close()
+   end
+   print('...done')
+   return idx2word, word2idx
 end
 
 function load_wordvecs(input_w2v, word2idx) 

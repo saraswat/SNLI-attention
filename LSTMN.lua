@@ -37,6 +37,7 @@ cmd:option('-decayRate',0.75,'decay rate for sgd')
 cmd:option('-decay_when',0.1,'decay if validation does not improve by more than this much')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
 cmd:option('-max_grad_norm',5,'normalize gradients at')
+cmd:option('-vocab_files','data','files to build up vocabulary')
 -- GPU/CPU
 cmd:option('-gpuid', -1,'which gpu to use. -1 = use CPU')
 cmd:option('-cudnn', 0,'use cudnn (1=yes). this should greatly speed up convolutions')
@@ -81,7 +82,7 @@ if restarting_from_checkpoint then
       loader = BatchLoader.recreate(checkpoint)
    end
 else 
-   loader = BatchLoader.create(opt.data_dir, opt.max_length, opt.batch_size)
+   loader = BatchLoader.create(opt.data_dir, opt.max_length, opt.batch_size, opt.vocab_files)
    opt.seq_length = loader.max_sentence_l 
    opt.vocab_size = #loader.idx2word
    opt.classes = 3
