@@ -23,13 +23,13 @@ cmd:option('-rnn_size', 400, 'dimensionality of sentence embeddings')
 cmd:option('-word_vec_size', 300, 'dimensionality of word embeddings')
 cmd:option('-dropout',0.4,'dropout. 0 = no dropout')
 cmd:option('-seed',3435,'torch manual random number generator seed')
-cmd:option('-max_length', 20, 'max length allowed for each sentence')
+cmd:option('-max_length', 20, 'max length allowed for T or H, words dropped after that')
 cmd:option('-print_every',1000,'how many steps/minibatches between printing out the loss')
 cmd:option('-save_every', 12500, 'save epoch')
 cmd:option('-checkpoint_dir', 'cv4', 'output directory where checkpoints get written')
 cmd:option('-savefile','model','filename to autosave the checkpont to. Will be inside checkpoint_dir/')
 cmd:option('-checkpoint', 'checkpoint.t7', 'start from a checkpoint if a valid checkpoint.t7 file is given')
-cmd:option('-score_file', '', 'file of observations to run scorer on')
+cmd:option('-score_files', '', 'file of observations to run scorer on')
 cmd:option('-learningRate', 0.001, 'learning rate')
 cmd:option('-beta1', 0.9, 'momentum parameter 1')
 cmd:option('-beta2', 0.999, 'momentum parameter 2')
@@ -67,17 +67,18 @@ if opt.checkpoint ~='checkpoint.t7' then
    print('restoring checkpoint from ' .. opt.checkpoint)
    checkpoint = torch.load(opt.checkpoint)
    opt = checkpoint.opt -- thus all options other than checkpoint are ignored from cmdline
+   opt.max_length = this_cmdline_opt.max_length
    print('restored.')
 end
 local scoring=false
-if (this_cmdline_opt.score_file ~= '') then
+if (this_cmdline_opt.score_files ~= '') then
    scoring=true
-   print('scoring ', this_cmdline_opt.score_file)
+   print('scoring ', this_cmdline_opt.score_files)
 end
 -- create data loader
 if restarting_from_checkpoint then
    if scoring then
-      loader = BatchLoader.createScorer(checkpoint, this_cmdline_opt.score_file)
+      loader = BatchLoader.createScorer(checkpoint, this_cmdline_opt.score_files)
    else
       loader = BatchLoader.recreate(checkpoint)
    end
@@ -143,7 +144,7 @@ if opt.gpuid >=0 then h_init = h_init:cuda() end
 
 --evaluation 
 function eval_split(split_idx)
-  print('evaluating accuracy over split index ' .. split_idx)
+--  print('evaluating accuracy over split index ' .. split_idx)
   local n = loader.split_sizes[split_idx]
   loader:reset_batch_pointer(split_idx)
   local correct_count = 0
@@ -364,9 +365,14 @@ end
 
 -- end with test
 if scoring then 
-   test_loss = eval_split(1)
+   for i=1,#loader.split_sizes do
+      test_loss = eval_split(i)
+      print (string.format("File %s test_loss = %6.4f", loader.input_files[i], test_loss))
+   end
+
 else 
    train() 
    test_loss = eval_split(3)
-end
 print (string.format("test_loss = %6.4f", test_loss))
+end
+

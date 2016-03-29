@@ -44,17 +44,22 @@ function BatchLoader.recreate(checkpoint)
    return BatchLoader.create(o.data_dir, o.max_length, o.batch_size)
 end
 
-function BatchLoader.createScorer(checkpoint, score_file) 
+function BatchLoader.createScorer(checkpoint, score_files) 
     local o=checkpoint.opt
-    local input_files = {score_file}
+    local input_files = {}
+    x = stringx.split(score_files, ' ')
+    for	_, file in pairs(x) do
+       table.insert(input_files, file)
+    end       
     local self = {}
     setmetatable(self, BatchLoader)
+    self.input_files = input_files
     local s1, s2, label, idx2word, word2idx  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab)
     -- Once tensors are created, you no longer need idx2word and word2idx
     self.idx2word = idx2word
     self.word2idx = word2idx
     self.vocab_size = #self.idx2word 
-    self.word2vec = load_wordvecs(input_w2v, word2idx)
+--    self.word2vec = load_wordvecs(input_w2v, word2idx)
     return BatchLoader.make_all_batches(self, o.batch_size, s1, s2, label, #input_files)
 end
 
@@ -66,6 +71,7 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size, vocab_files)
     local input_w2v = path.join(data_dir, 'word2vec.txt')
     local self = {}
     setmetatable(self, BatchLoader)
+    self.input_files=input_files
     local s1, s2, label, idx2word, word2idx = BatchLoader.text_to_tensor(input_files, max_sentence_l, nil)
     self.max_sentence_l = max_sentence_l -- vj, I don't think this is needed.
     if vocab_files ~= nil then
@@ -105,11 +111,11 @@ function BatchLoader.make_all_batches(self, batch_size, s1, s2, label, num_input
        self.all_batches[split] = {s1_batches, s2_batches, label_batches}
     end
  
-    self.batch_idx = {0,0,0}
-    if num_input_files==3 then
-       print(string.format('data load done. Number of batches in train: %d, val: %d, test: %d', self.split_sizes[1], self.split_sizes[2], self.split_sizes[3]))
-    else
-       print(string.format('data load done. Number of batches in test: %d', self.split_sizes[1]))
+    self.batch_idx = {}
+    print('data load done. Number of batches in train:')
+    for i=1,num_input_files do
+       table.insert(self.batch_idx, 0)
+       print(string.format('File %s %d', self.input_files[i], self.split_sizes[i]))
     end
     collectgarbage()
     return self
