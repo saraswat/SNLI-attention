@@ -1,0 +1,27 @@
+using CUDA on GPU 0...	
+restoring checkpoint from runs/loaded_all/cv4/model_model_epoch4.73_0.80.t7	
+restored.	
+Processing text into tensors...	
+vj: opening file	runs/loaded_all_and_then_sick/data/train.txt	
+vj: opening file	runs/loaded_all_and_then_sick/data/dev.txt	
+vj: opening file	runs/loaded_all_and_then_sick/data/test.txt	
+(T,H) pair count: train 4500, val 4500, test 4927	
+loading word vecs...	
+...loaded	
+Word vocab size: 2406	
+data load done. Number of batches in train:	
+File runs/loaded_all_and_then_sick/data/train.txt 281	
+File runs/loaded_all_and_then_sick/data/dev.txt 281	
+File runs/loaded_all_and_then_sick/data/test.txt 307	
+number of parameters in the model: 31471806	
+cloning dec	
+cloning enc	
+training...	
+start_iterations 	1	 iterations 	2810	
+1000/2810 (epoch 3.56), train_loss = 0.2598	
+2000/2810 (epoch 7.12), train_loss = 0.1288	
+evaluate on validation set	
+0.99555160142349	
+0.68851791530945	
+saving checkpoint to runs/loaded_all_and_then_sick/cv4/model_model_epoch10.00_1.00.t7	
+test_loss = 0.6885	

@@ -1,0 +1,52 @@
+Tue Mar 29 02:58:41 EDT 2016
+
+th LSTMN.lua -gpuid 0 -checkpoint runs/loaded_all/cv4/model_model_epoch2.54_0.80.t7  -score_files "/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.train.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE1.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE2.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE3.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/SICK/SICK_test_annotated.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/SICK/SICK_train.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt" 
+using CUDA on GPU 0...	
+restoring checkpoint from runs/loaded_all/cv4/model_model_epoch2.54_0.80.t7	
+restored.	
+scoring 	/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.train.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE1.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE2.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE3.test.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/SICK/SICK_test_annotated.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/SICK/SICK_train.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt	
+Processing text into tensors...	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.test.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.train.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/RTE/RTE1.test.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/RTE/RTE2.test.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/RTE/RTE3.test.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/SICK/SICK_test_annotated.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/SICK/SICK_train.csi.tokenized.txt	
+vj: opening file	/home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt	
+(T,H) pair count: test 31	
+Word vocab size: 45497	
+data load done. Number of batches in train:	
+File /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.test.csi.tokenized.txt 1	
+File /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.train.csi.tokenized.txt 15	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE1.test.csi.tokenized.txt 50	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE2.test.csi.tokenized.txt 50	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE3.test.csi.tokenized.txt 50	
+File /home/vj/data/data-bank/textual-entailment/SICK/SICK_test_annotated.csi.tokenized.txt 307	
+File /home/vj/data/data-bank/textual-entailment/SICK/SICK_train.csi.tokenized.txt 281	
+File /home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt 21	
+number of parameters in the model: 31471806	
+cloning dec	
+cloning enc	
+File /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.test.csi.tokenized.txt test_loss = 0.5625	
+File /home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.train.csi.tokenized.txt test_loss = 0.3875	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE1.test.csi.tokenized.txt test_loss = 0.3425	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE2.test.csi.tokenized.txt test_loss = 0.3850	
+File /home/vj/data/data-bank/textual-entailment/RTE/RTE3.test.csi.tokenized.txt test_loss = 0.3725	
+File /home/vj/data/data-bank/textual-entailment/SICK/SICK_test_annotated.csi.tokenized.txt test_loss = 0.4839	
+File /home/vj/data/data-bank/textual-entailment/SICK/SICK_train.csi.tokenized.txt test_loss = 0.4766	
+File /home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt test_loss = 0.4375	
+[vj@x10cuda SNLI-attention]$ 
+Sat Mar 26 02:31:21 EDT 2016
+
+th LSTMN.lua -gpuid 0 -score_file /home/vj/data/data-bank/textual-entailment/RTE/RTE.test.csi.tokenized.f -checkpoint cv4/model_model_epoch1.82_0.81.t7 
+
+Mon Mar 21 16:32:39 EDT 2016
+
+Keep the length of sentences in mind -- the default is just 20 words!
+For compliance, you need 50 word limit in the sentence.
+
+Ugh! This builds in the dimensionality of the word vectors. 300.
+What is the dim of the Glove word vectors? (whew, it is 300.)
+
+Hmm.. am i not supposed to run oovec.py first?!?

@@ -1,0 +1,20 @@
+using CUDA on GPU 0...	
+for mode start restoring checkpoint from runs/loaded_all/cv4/model_model_epoch4.36_0.80.t7	
+restored.	
+Processing text into tensors...	
+vj: opening file	runs/loaded_all_and_then_sick/data/train.txt	
+vj: opening file	runs/loaded_all_and_then_sick/data/dev.txt	
+vj: opening file	runs/loaded_all_and_then_sick/data/test.txt	
+(T,H) pair count: train 4500, val 4500, test 4927	
+loading word vecs...	
+...loaded	
+Word vocab size: 45497	
+data load done. Number of batches in train:	
+File runs/loaded_all_and_then_sick/data/train.txt 140	
+File runs/loaded_all_and_then_sick/data/dev.txt 140	
+File runs/loaded_all_and_then_sick/data/test.txt 153	
+number of parameters in the model: 31471806	
+cloning dec	
+cloning enc	
+starting training from ckp...	
+start_iterations 	1	 iterations 	560	

@@ -1,0 +1,3 @@
+Sat Mar 26 12:41:23 EDT 2016
+
+nohup th LSTMN.lua -gpuid 0 -max_epochs 10 -checkpoint_dir runs/loaded_all/cv4 -vocab_files "/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.all.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/RTE/RTE.all.csi.tokenized.f /home/vj/data/data-bank/textual-entailment/SICK/SICK_all.csi.tokenized.txt /home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt" > runs/loaded_all/run.txt &

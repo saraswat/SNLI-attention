@@ -1,0 +1,474 @@
+using CUDA on GPU 0...	
+Processing text into tensors...	
+vj: opening file	data/train.txt	
+vj: opening file	data/dev.txt	
+vj: opening file	data/test.txt	
+(T,H) pair count: train 550152, val 10000, test 10000	
+loading vocab files...	
+ingesting from 	/home/vj/data/data-bank/textual-entailment/compliance/compliance-TE-v1.all.csi.tokenized.txt	
+ingesting from 	/home/vj/data/data-bank/textual-entailment/RTE/RTE.all.csi.tokenized.f	
+ingesting from 	/home/vj/data/data-bank/textual-entailment/SICK/SICK_all.csi.tokenized.txt	
+ingesting from 	/home/vj/data/data-bank/textual-entailment/fracas/fracas.csi.tokenized.txt	
+...done	
+loading word vecs...	
+...loaded	
+Word vocab size: 45497	
+data load done. Number of batches in train:	
+File data/train.txt 34384	
+File data/dev.txt 625	
+File data/test.txt 625	
+number of parameters in the model: 31471806	
+cloning dec	
+cloning enc	
+1000/343840 (epoch 0.03), train_loss = 0.9931	
+2000/343840 (epoch 0.06), train_loss = 0.8778	
+3000/343840 (epoch 0.09), train_loss = 0.9240	
+4000/343840 (epoch 0.12), train_loss = 1.0103	
+5000/343840 (epoch 0.15), train_loss = 0.5551	
+6000/343840 (epoch 0.17), train_loss = 0.5727	
+7000/343840 (epoch 0.20), train_loss = 0.6756	
+8000/343840 (epoch 0.23), train_loss = 1.3103	
+9000/343840 (epoch 0.26), train_loss = 0.6314	
+10000/343840 (epoch 0.29), train_loss = 0.5296	
+11000/343840 (epoch 0.32), train_loss = 0.4375	
+12000/343840 (epoch 0.35), train_loss = 0.5703	
+evaluate on validation set	
+0.7545	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch0.36_0.75.t7	
+13000/343840 (epoch 0.38), train_loss = 0.2517	
+14000/343840 (epoch 0.41), train_loss = 0.3128	
+15000/343840 (epoch 0.44), train_loss = 0.6080	
+16000/343840 (epoch 0.47), train_loss = 0.6931	
+17000/343840 (epoch 0.49), train_loss = 0.2861	
+18000/343840 (epoch 0.52), train_loss = 0.4680	
+19000/343840 (epoch 0.55), train_loss = 0.3409	
+20000/343840 (epoch 0.58), train_loss = 0.4506	
+21000/343840 (epoch 0.61), train_loss = 0.5959	
+22000/343840 (epoch 0.64), train_loss = 0.4469	
+23000/343840 (epoch 0.67), train_loss = 0.6143	
+24000/343840 (epoch 0.70), train_loss = 0.3360	
+25000/343840 (epoch 0.73), train_loss = 0.4329	
+evaluate on validation set	
+0.7846	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch0.73_0.78.t7	
+26000/343840 (epoch 0.76), train_loss = 0.7289	
+27000/343840 (epoch 0.79), train_loss = 0.3389	
+28000/343840 (epoch 0.81), train_loss = 0.3915	
+29000/343840 (epoch 0.84), train_loss = 0.2866	
+30000/343840 (epoch 0.87), train_loss = 0.3331	
+31000/343840 (epoch 0.90), train_loss = 0.6123	
+32000/343840 (epoch 0.93), train_loss = 0.1501	
+33000/343840 (epoch 0.96), train_loss = 0.6173	
+34000/343840 (epoch 0.99), train_loss = 0.5922	
+35000/343840 (epoch 1.02), train_loss = 0.2570	
+36000/343840 (epoch 1.05), train_loss = 0.4952	
+37000/343840 (epoch 1.08), train_loss = 0.9607	
+evaluate on validation set	
+0.7958	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch1.09_0.80.t7	
+38000/343840 (epoch 1.11), train_loss = 0.7296	
+39000/343840 (epoch 1.13), train_loss = 0.5056	
+40000/343840 (epoch 1.16), train_loss = 0.4477	
+41000/343840 (epoch 1.19), train_loss = 0.5025	
+42000/343840 (epoch 1.22), train_loss = 0.3764	
+43000/343840 (epoch 1.25), train_loss = 0.2891	
+44000/343840 (epoch 1.28), train_loss = 0.5894	
+45000/343840 (epoch 1.31), train_loss = 0.3218	
+46000/343840 (epoch 1.34), train_loss = 0.6162	
+47000/343840 (epoch 1.37), train_loss = 0.1932	
+48000/343840 (epoch 1.40), train_loss = 0.2900	
+49000/343840 (epoch 1.43), train_loss = 0.5639	
+50000/343840 (epoch 1.45), train_loss = 0.5315	
+evaluate on validation set	
+0.8022	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch1.45_0.80.t7	
+51000/343840 (epoch 1.48), train_loss = 0.4003	
+52000/343840 (epoch 1.51), train_loss = 0.7842	
+53000/343840 (epoch 1.54), train_loss = 0.2194	
+54000/343840 (epoch 1.57), train_loss = 0.1736	
+55000/343840 (epoch 1.60), train_loss = 0.6123	
+56000/343840 (epoch 1.63), train_loss = 0.1999	
+57000/343840 (epoch 1.66), train_loss = 0.5137	
+58000/343840 (epoch 1.69), train_loss = 0.0763	
+59000/343840 (epoch 1.72), train_loss = 0.7099	
+60000/343840 (epoch 1.74), train_loss = 0.2005	
+61000/343840 (epoch 1.77), train_loss = 0.4280	
+62000/343840 (epoch 1.80), train_loss = 0.4086	
+evaluate on validation set	
+0.8054	
+0.8187	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch1.82_0.81.t7	
+63000/343840 (epoch 1.83), train_loss = 0.1675	
+64000/343840 (epoch 1.86), train_loss = 0.2706	
+65000/343840 (epoch 1.89), train_loss = 0.1883	
+66000/343840 (epoch 1.92), train_loss = 0.7972	
+67000/343840 (epoch 1.95), train_loss = 0.3668	
+68000/343840 (epoch 1.98), train_loss = 0.3243	
+69000/343840 (epoch 2.01), train_loss = 0.5247	
+70000/343840 (epoch 2.04), train_loss = 0.2451	
+71000/343840 (epoch 2.06), train_loss = 0.2307	
+72000/343840 (epoch 2.09), train_loss = 0.3261	
+73000/343840 (epoch 2.12), train_loss = 0.3676	
+74000/343840 (epoch 2.15), train_loss = 0.3742	
+75000/343840 (epoch 2.18), train_loss = 0.1552	
+evaluate on validation set	
+0.8032	
+0.8113	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch2.18_0.80.t7	
+76000/343840 (epoch 2.21), train_loss = 0.3862	
+77000/343840 (epoch 2.24), train_loss = 0.4142	
+78000/343840 (epoch 2.27), train_loss = 0.4603	
+79000/343840 (epoch 2.30), train_loss = 0.5489	
+80000/343840 (epoch 2.33), train_loss = 0.5853	
+81000/343840 (epoch 2.36), train_loss = 0.3987	
+82000/343840 (epoch 2.38), train_loss = 0.1054	
+83000/343840 (epoch 2.41), train_loss = 0.4715	
+84000/343840 (epoch 2.44), train_loss = 0.0866	
+85000/343840 (epoch 2.47), train_loss = 0.1592	
+86000/343840 (epoch 2.50), train_loss = 0.5985	
+87000/343840 (epoch 2.53), train_loss = 0.2632	
+evaluate on validation set	
+0.8022	
+0.8147	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch2.54_0.80.t7	
+88000/343840 (epoch 2.56), train_loss = 0.7612	
+89000/343840 (epoch 2.59), train_loss = 0.2520	
+90000/343840 (epoch 2.62), train_loss = 0.1462	
+91000/343840 (epoch 2.65), train_loss = 0.9224	
+92000/343840 (epoch 2.68), train_loss = 0.4157	
+93000/343840 (epoch 2.70), train_loss = 0.5042	
+94000/343840 (epoch 2.73), train_loss = 0.1844	
+95000/343840 (epoch 2.76), train_loss = 0.1889	
+96000/343840 (epoch 2.79), train_loss = 0.1586	
+97000/343840 (epoch 2.82), train_loss = 0.1066	
+98000/343840 (epoch 2.85), train_loss = 0.1983	
+99000/343840 (epoch 2.88), train_loss = 0.1476	
+100000/343840 (epoch 2.91), train_loss = 0.1916	
+evaluate on validation set	
+0.8045	
+0.8223	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch2.91_0.80.t7	
+101000/343840 (epoch 2.94), train_loss = 0.1584	
+102000/343840 (epoch 2.97), train_loss = 0.1832	
+103000/343840 (epoch 3.00), train_loss = 0.8949	
+104000/343840 (epoch 3.02), train_loss = 0.1281	
+105000/343840 (epoch 3.05), train_loss = 0.2294	
+106000/343840 (epoch 3.08), train_loss = 0.2032	
+107000/343840 (epoch 3.11), train_loss = 0.3542	
+108000/343840 (epoch 3.14), train_loss = 0.3017	
+109000/343840 (epoch 3.17), train_loss = 0.0765	
+110000/343840 (epoch 3.20), train_loss = 0.0991	
+111000/343840 (epoch 3.23), train_loss = 0.3955	
+112000/343840 (epoch 3.26), train_loss = 0.1216	
+evaluate on validation set	
+0.8007	
+0.8177	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch3.27_0.80.t7	
+113000/343840 (epoch 3.29), train_loss = 0.3881	
+114000/343840 (epoch 3.32), train_loss = 0.3227	
+115000/343840 (epoch 3.34), train_loss = 0.2515	
+116000/343840 (epoch 3.37), train_loss = 0.1430	
+117000/343840 (epoch 3.40), train_loss = 0.1846	
+118000/343840 (epoch 3.43), train_loss = 0.3984	
+119000/343840 (epoch 3.46), train_loss = 0.2515	
+120000/343840 (epoch 3.49), train_loss = 0.3413	
+121000/343840 (epoch 3.52), train_loss = 0.2851	
+122000/343840 (epoch 3.55), train_loss = 0.2223	
+123000/343840 (epoch 3.58), train_loss = 0.2001	
+124000/343840 (epoch 3.61), train_loss = 0.0567	
+125000/343840 (epoch 3.64), train_loss = 0.4389	
+evaluate on validation set	
+0.8055	
+0.8178	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch3.64_0.81.t7	
+126000/343840 (epoch 3.66), train_loss = 1.0409	
+127000/343840 (epoch 3.69), train_loss = 0.1596	
+128000/343840 (epoch 3.72), train_loss = 0.2370	
+129000/343840 (epoch 3.75), train_loss = 0.2694	
+130000/343840 (epoch 3.78), train_loss = 0.2076	
+131000/343840 (epoch 3.81), train_loss = 0.5368	
+132000/343840 (epoch 3.84), train_loss = 0.3669	
+133000/343840 (epoch 3.87), train_loss = 0.2774	
+134000/343840 (epoch 3.90), train_loss = 0.1657	
+135000/343840 (epoch 3.93), train_loss = 0.2184	
+136000/343840 (epoch 3.96), train_loss = 0.1852	
+137000/343840 (epoch 3.98), train_loss = 0.2517	
+evaluate on validation set	
+0.7998	
+0.8083	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch4.00_0.80.t7	
+138000/343840 (epoch 4.01), train_loss = 0.3734	
+139000/343840 (epoch 4.04), train_loss = 0.5703	
+140000/343840 (epoch 4.07), train_loss = 0.1968	
+141000/343840 (epoch 4.10), train_loss = 0.0933	
+142000/343840 (epoch 4.13), train_loss = 0.6573	
+143000/343840 (epoch 4.16), train_loss = 0.4939	
+144000/343840 (epoch 4.19), train_loss = 0.4329	
+145000/343840 (epoch 4.22), train_loss = 0.1284	
+146000/343840 (epoch 4.25), train_loss = 0.0874	
+147000/343840 (epoch 4.28), train_loss = 0.5976	
+148000/343840 (epoch 4.30), train_loss = 0.1304	
+149000/343840 (epoch 4.33), train_loss = 0.0948	
+150000/343840 (epoch 4.36), train_loss = 0.0627	
+evaluate on validation set	
+0.7986	
+0.8123	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch4.36_0.80.t7	
+151000/343840 (epoch 4.39), train_loss = 0.4483	
+152000/343840 (epoch 4.42), train_loss = 0.3136	
+153000/343840 (epoch 4.45), train_loss = 0.3094	
+154000/343840 (epoch 4.48), train_loss = 0.1550	
+155000/343840 (epoch 4.51), train_loss = 0.3686	
+156000/343840 (epoch 4.54), train_loss = 0.3262	
+157000/343840 (epoch 4.57), train_loss = 0.3315	
+158000/343840 (epoch 4.60), train_loss = 0.3103	
+159000/343840 (epoch 4.62), train_loss = 0.5943	
+160000/343840 (epoch 4.65), train_loss = 0.4077	
+161000/343840 (epoch 4.68), train_loss = 0.2190	
+162000/343840 (epoch 4.71), train_loss = 0.6401	
+evaluate on validation set	
+0.8019	
+0.8083	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch4.73_0.80.t7	
+163000/343840 (epoch 4.74), train_loss = 0.1426	
+164000/343840 (epoch 4.77), train_loss = 0.1433	
+165000/343840 (epoch 4.80), train_loss = 0.1783	
+166000/343840 (epoch 4.83), train_loss = 0.1031	
+167000/343840 (epoch 4.86), train_loss = 0.4713	
+168000/343840 (epoch 4.89), train_loss = 0.7612	
+169000/343840 (epoch 4.92), train_loss = 0.3909	
+170000/343840 (epoch 4.94), train_loss = 0.2711	
+171000/343840 (epoch 4.97), train_loss = 0.1858	
+172000/343840 (epoch 5.00), train_loss = 0.4322	
+173000/343840 (epoch 5.03), train_loss = 0.4610	
+174000/343840 (epoch 5.06), train_loss = 0.4271	
+175000/343840 (epoch 5.09), train_loss = 0.5590	
+evaluate on validation set	
+0.7988	
+0.8043	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch5.09_0.80.t7	
+176000/343840 (epoch 5.12), train_loss = 0.0630	
+177000/343840 (epoch 5.15), train_loss = 0.2463	
+178000/343840 (epoch 5.18), train_loss = 0.4632	
+179000/343840 (epoch 5.21), train_loss = 0.2083	
+180000/343840 (epoch 5.23), train_loss = 0.1565	
+181000/343840 (epoch 5.26), train_loss = 0.2499	
+182000/343840 (epoch 5.29), train_loss = 0.1538	
+183000/343840 (epoch 5.32), train_loss = 0.1619	
+184000/343840 (epoch 5.35), train_loss = 0.3425	
+185000/343840 (epoch 5.38), train_loss = 0.2288	
+186000/343840 (epoch 5.41), train_loss = 0.1749	
+187000/343840 (epoch 5.44), train_loss = 0.1126	
+evaluate on validation set	
+0.7972	
+0.8073	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch5.45_0.80.t7	
+188000/343840 (epoch 5.47), train_loss = 0.0274	
+189000/343840 (epoch 5.50), train_loss = 0.5493	
+190000/343840 (epoch 5.53), train_loss = 0.0913	
+191000/343840 (epoch 5.55), train_loss = 0.3834	
+192000/343840 (epoch 5.58), train_loss = 0.1808	
+193000/343840 (epoch 5.61), train_loss = 0.4123	
+194000/343840 (epoch 5.64), train_loss = 0.4930	
+195000/343840 (epoch 5.67), train_loss = 0.3469	
+196000/343840 (epoch 5.70), train_loss = 0.0542	
+197000/343840 (epoch 5.73), train_loss = 0.0930	
+198000/343840 (epoch 5.76), train_loss = 0.1546	
+199000/343840 (epoch 5.79), train_loss = 0.1572	
+200000/343840 (epoch 5.82), train_loss = 0.1923	
+evaluate on validation set	
+0.7926	
+0.8063	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch5.82_0.79.t7	
+201000/343840 (epoch 5.85), train_loss = 0.2071	
+202000/343840 (epoch 5.87), train_loss = 0.2898	
+203000/343840 (epoch 5.90), train_loss = 0.2898	
+204000/343840 (epoch 5.93), train_loss = 0.1299	
+205000/343840 (epoch 5.96), train_loss = 0.5000	
+206000/343840 (epoch 5.99), train_loss = 0.1673	
+207000/343840 (epoch 6.02), train_loss = 0.1723	
+208000/343840 (epoch 6.05), train_loss = 0.0943	
+209000/343840 (epoch 6.08), train_loss = 0.2422	
+210000/343840 (epoch 6.11), train_loss = 0.2667	
+211000/343840 (epoch 6.14), train_loss = 0.2028	
+212000/343840 (epoch 6.17), train_loss = 0.2361	
+evaluate on validation set	
+0.7941	
+0.8026	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch6.18_0.79.t7	
+213000/343840 (epoch 6.19), train_loss = 0.5047	
+214000/343840 (epoch 6.22), train_loss = 0.2327	
+215000/343840 (epoch 6.25), train_loss = 0.0260	
+216000/343840 (epoch 6.28), train_loss = 0.0484	
+217000/343840 (epoch 6.31), train_loss = 0.3268	
+218000/343840 (epoch 6.34), train_loss = 0.0528	
+219000/343840 (epoch 6.37), train_loss = 0.1321	
+220000/343840 (epoch 6.40), train_loss = 0.0358	
+221000/343840 (epoch 6.43), train_loss = 0.0824	
+222000/343840 (epoch 6.46), train_loss = 0.1929	
+223000/343840 (epoch 6.49), train_loss = 0.0914	
+224000/343840 (epoch 6.51), train_loss = 0.0690	
+225000/343840 (epoch 6.54), train_loss = 0.5037	
+evaluate on validation set	
+0.7925	
+0.807	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch6.54_0.79.t7	
+226000/343840 (epoch 6.57), train_loss = 0.1256	
+227000/343840 (epoch 6.60), train_loss = 0.1897	
+228000/343840 (epoch 6.63), train_loss = 0.1516	
+229000/343840 (epoch 6.66), train_loss = 0.0814	
+230000/343840 (epoch 6.69), train_loss = 0.0498	
+231000/343840 (epoch 6.72), train_loss = 0.0740	
+232000/343840 (epoch 6.75), train_loss = 0.0238	
+233000/343840 (epoch 6.78), train_loss = 0.0196	
+234000/343840 (epoch 6.81), train_loss = 0.4221	
+235000/343840 (epoch 6.83), train_loss = 0.1824	
+236000/343840 (epoch 6.86), train_loss = 0.1689	
+237000/343840 (epoch 6.89), train_loss = 0.1798	
+evaluate on validation set	
+0.7946	
+0.8044	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch6.91_0.79.t7	
+238000/343840 (epoch 6.92), train_loss = 0.0334	
+239000/343840 (epoch 6.95), train_loss = 0.0433	
+240000/343840 (epoch 6.98), train_loss = 0.0933	
+241000/343840 (epoch 7.01), train_loss = 0.1059	
+242000/343840 (epoch 7.04), train_loss = 0.0489	
+243000/343840 (epoch 7.07), train_loss = 0.0300	
+244000/343840 (epoch 7.10), train_loss = 0.1611	
+245000/343840 (epoch 7.13), train_loss = 0.0680	
+246000/343840 (epoch 7.15), train_loss = 0.4445	
+247000/343840 (epoch 7.18), train_loss = 0.1009	
+248000/343840 (epoch 7.21), train_loss = 0.2266	
+249000/343840 (epoch 7.24), train_loss = 0.1639	
+250000/343840 (epoch 7.27), train_loss = 0.1401	
+evaluate on validation set	
+0.7957	
+0.8078	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch7.27_0.80.t7	
+251000/343840 (epoch 7.30), train_loss = 0.3436	
+252000/343840 (epoch 7.33), train_loss = 0.2951	
+253000/343840 (epoch 7.36), train_loss = 0.0379	
+254000/343840 (epoch 7.39), train_loss = 0.5066	
+255000/343840 (epoch 7.42), train_loss = 0.1385	
+256000/343840 (epoch 7.45), train_loss = 0.1912	
+257000/343840 (epoch 7.47), train_loss = 0.1225	
+258000/343840 (epoch 7.50), train_loss = 0.0792	
+259000/343840 (epoch 7.53), train_loss = 0.1652	
+260000/343840 (epoch 7.56), train_loss = 0.5820	
+261000/343840 (epoch 7.59), train_loss = 0.5522	
+262000/343840 (epoch 7.62), train_loss = 0.3251	
+evaluate on validation set	
+0.79	
+0.8039	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch7.63_0.79.t7	
+263000/343840 (epoch 7.65), train_loss = 0.0528	
+264000/343840 (epoch 7.68), train_loss = 0.0288	
+265000/343840 (epoch 7.71), train_loss = 0.1606	
+266000/343840 (epoch 7.74), train_loss = 0.1082	
+267000/343840 (epoch 7.77), train_loss = 0.1690	
+268000/343840 (epoch 7.79), train_loss = 0.0771	
+269000/343840 (epoch 7.82), train_loss = 0.0867	
+270000/343840 (epoch 7.85), train_loss = 0.0915	
+271000/343840 (epoch 7.88), train_loss = 0.1486	
+272000/343840 (epoch 7.91), train_loss = 0.2185	
+273000/343840 (epoch 7.94), train_loss = 0.2838	
+274000/343840 (epoch 7.97), train_loss = 0.1430	
+275000/343840 (epoch 8.00), train_loss = 0.1428	
+evaluate on validation set	
+0.7839	
+0.8013	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch8.00_0.78.t7	
+276000/343840 (epoch 8.03), train_loss = 0.0881	
+277000/343840 (epoch 8.06), train_loss = 0.0980	
+278000/343840 (epoch 8.09), train_loss = 0.0301	
+279000/343840 (epoch 8.11), train_loss = 0.1600	
+280000/343840 (epoch 8.14), train_loss = 0.1414	
+281000/343840 (epoch 8.17), train_loss = 0.1088	
+282000/343840 (epoch 8.20), train_loss = 0.1965	
+283000/343840 (epoch 8.23), train_loss = 0.1124	
+284000/343840 (epoch 8.26), train_loss = 0.0825	
+285000/343840 (epoch 8.29), train_loss = 0.2462	
+286000/343840 (epoch 8.32), train_loss = 0.2769	
+287000/343840 (epoch 8.35), train_loss = 0.3494	
+evaluate on validation set	
+0.7939	
+0.8052	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch8.36_0.79.t7	
+288000/343840 (epoch 8.38), train_loss = 0.2464	
+289000/343840 (epoch 8.41), train_loss = 0.1257	
+290000/343840 (epoch 8.43), train_loss = 0.3896	
+291000/343840 (epoch 8.46), train_loss = 0.0359	
+292000/343840 (epoch 8.49), train_loss = 0.1103	
+293000/343840 (epoch 8.52), train_loss = 0.1176	
+294000/343840 (epoch 8.55), train_loss = 0.0812	
+295000/343840 (epoch 8.58), train_loss = 0.0983	
+296000/343840 (epoch 8.61), train_loss = 0.2237	
+297000/343840 (epoch 8.64), train_loss = 0.2368	
+298000/343840 (epoch 8.67), train_loss = 0.7790	
+299000/343840 (epoch 8.70), train_loss = 0.3174	
+300000/343840 (epoch 8.72), train_loss = 0.0644	
+evaluate on validation set	
+0.7938	
+0.8012	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch8.72_0.79.t7	
+301000/343840 (epoch 8.75), train_loss = 0.1523	
+302000/343840 (epoch 8.78), train_loss = 0.3494	
+303000/343840 (epoch 8.81), train_loss = 0.2672	
+304000/343840 (epoch 8.84), train_loss = 0.2640	
+305000/343840 (epoch 8.87), train_loss = 0.3174	
+306000/343840 (epoch 8.90), train_loss = 0.5964	
+307000/343840 (epoch 8.93), train_loss = 0.3815	
+308000/343840 (epoch 8.96), train_loss = 0.2330	
+309000/343840 (epoch 8.99), train_loss = 0.3706	
+310000/343840 (epoch 9.02), train_loss = 0.2332	
+311000/343840 (epoch 9.04), train_loss = 0.1295	
+312000/343840 (epoch 9.07), train_loss = 0.0390	
+evaluate on validation set	
+0.7854	
+0.7965	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch9.09_0.79.t7	
+313000/343840 (epoch 9.10), train_loss = 0.5813	
+314000/343840 (epoch 9.13), train_loss = 0.2050	
+315000/343840 (epoch 9.16), train_loss = 0.2029	
+316000/343840 (epoch 9.19), train_loss = 0.1474	
+317000/343840 (epoch 9.22), train_loss = 0.3785	
+318000/343840 (epoch 9.25), train_loss = 0.1528	
+319000/343840 (epoch 9.28), train_loss = 0.3580	
+320000/343840 (epoch 9.31), train_loss = 0.0451	
+321000/343840 (epoch 9.34), train_loss = 0.2475	
+322000/343840 (epoch 9.36), train_loss = 0.1542	
+323000/343840 (epoch 9.39), train_loss = 0.2151	
+324000/343840 (epoch 9.42), train_loss = 0.1713	
+325000/343840 (epoch 9.45), train_loss = 0.3413	
+evaluate on validation set	
+0.7945	
+0.7969	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch9.45_0.79.t7	
+326000/343840 (epoch 9.48), train_loss = 0.0731	
+327000/343840 (epoch 9.51), train_loss = 0.4894	
+328000/343840 (epoch 9.54), train_loss = 0.1318	
+329000/343840 (epoch 9.57), train_loss = 0.1898	
+330000/343840 (epoch 9.60), train_loss = 0.1279	
+331000/343840 (epoch 9.63), train_loss = 0.2475	
+332000/343840 (epoch 9.66), train_loss = 0.4641	
+333000/343840 (epoch 9.68), train_loss = 0.0179	
+334000/343840 (epoch 9.71), train_loss = 0.1236	
+335000/343840 (epoch 9.74), train_loss = 0.3429	
+336000/343840 (epoch 9.77), train_loss = 0.0981	
+337000/343840 (epoch 9.80), train_loss = 0.4667	
+evaluate on validation set	
+0.7901	
+0.8012	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch9.82_0.79.t7	
+338000/343840 (epoch 9.83), train_loss = 0.0812	
+339000/343840 (epoch 9.86), train_loss = 0.2582	
+340000/343840 (epoch 9.89), train_loss = 0.3324	
+341000/343840 (epoch 9.92), train_loss = 0.1620	
+342000/343840 (epoch 9.95), train_loss = 0.5225	
+343000/343840 (epoch 9.98), train_loss = 0.2684	
+evaluate on validation set	
+0.7876	
+0.7985	
+saving checkpoint to runs/loaded_all/cv4/model_model_epoch10.00_0.79.t7	
+test_loss = 0.7984	
