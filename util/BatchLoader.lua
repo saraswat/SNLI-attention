@@ -27,24 +27,16 @@ function BatchLoader.labelToNumber(label)
    return -1
 end
 
--- vj: Hmm. There are two reasonable strategies for dealing with the
--- input data (train, dev, test). Either we store the loader in the
--- checkpoint ... this makes the checkpoint big, and we have to store
--- the extra data each time on disk. And we don't need the data when 
--- building a scoring engine from a checkpoint.
--- Or we do not checkpoint the input state (train, dev, test T, H and label tensors, 
--- idx2word, word2idx,  w2v, but build them afresh from data that is already on 
--- disk when we restart after a checkpoint. 
--- I believe we should use the second strategy.
--- Currently, the checkpoint stores opt. This contains word2vec.
--- It also separately stores idx2word and word2idx (in vocab). 
--- for now ignore this state from checkpoint, and just rebuild from scratch
-function BatchLoader.recreate(checkpoint) 
+-- checkpoint stores word2vec and word2idx. (It also stores
+-- idx2word, this is needed for routines that display activation maps
+-- for illustrative purposes.)
+
+function BatchLoader.recreate(checkpoint, mode) 
    local o=checkpoint.opt
-   return BatchLoader.create(o.data_dir, o.max_length, o.batch_size)
+   return BatchLoader.create(o.data_dir, o.max_length, o.batch_size, checkpoint.vocab, '', mode)
 end
 
-function BatchLoader.createScorer(checkpoint, score_files) 
+function BatchLoader.createScorer(checkpoint, score_files, mode) 
     local o=checkpoint.opt
     local input_files = {}
     x = stringx.split(score_files, ' ')
@@ -54,16 +46,19 @@ function BatchLoader.createScorer(checkpoint, score_files)
     local self = {}
     setmetatable(self, BatchLoader)
     self.input_files = input_files
-    local s1, s2, label, idx2word, word2idx  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab)
+    local s1, s2, label, idx2word, word2idx  = BatchLoader.text_to_tensor(input_files, o.max_length, checkpoint.vocab, mode)
+
     -- Once tensors are created, you no longer need idx2word and word2idx
+    -- so we don't need the following assignments
     self.idx2word = idx2word
     self.word2idx = word2idx
     self.vocab_size = #self.idx2word 
 --    self.word2vec = load_wordvecs(input_w2v, word2idx)
+
     return BatchLoader.make_all_batches(self, o.batch_size, s1, s2, label, #input_files)
 end
 
-function BatchLoader.create(data_dir, max_sentence_l , batch_size, vocab_files)
+function BatchLoader.create(data_dir, max_sentence_l , batch_size, vocab, vocab_files, mode)
     local train_file = path.join(data_dir, 'train.txt')
     local valid_file = path.join(data_dir, 'dev.txt')
     local test_file = path.join(data_dir, 'test.txt')
@@ -72,19 +67,24 @@ function BatchLoader.create(data_dir, max_sentence_l , batch_size, vocab_files)
     local self = {}
     setmetatable(self, BatchLoader)
     self.input_files=input_files
-    local s1, s2, label, idx2word, word2idx = BatchLoader.text_to_tensor(input_files, max_sentence_l, nil)
+    local s1, s2, label, idx2word, word2idx = 
+       BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab, mode)
     self.max_sentence_l = max_sentence_l -- vj, I don't think this is needed.
-    if vocab_files ~= nil then
-       idx2word, word2idx = ingest_vocab_words(vocab_files, idx2word, word2idx)
+    if vocab_files ~= '' then
+       idx2word, word2idx = ingest_vocab_words(vocab_files, idx2word, word2idx, mode)
     end
-    self.idx2word, self.word2idx = idx2word, word2idx -- record it, because we will need to checkpoint this
-    self.vocab_size = #self.idx2word 
 
+    -- record it, because we will need to checkpoint this
+    self.idx2word, self.word2idx = idx2word, word2idx 
+    self.vocab_size = #self.idx2word 
     self.word2vec = load_wordvecs(input_w2v, word2idx)
-    return BatchLoader.make_all_batches(self, batch_size, s1, s2, label, #input_files)
+
+    return BatchLoader.make_all_batches(self, batch_size, s1, s2, label, 
+                                        #input_files)
 end
 
-function BatchLoader.make_all_batches(self, batch_size, s1, s2, label, num_input_files)
+function BatchLoader.make_all_batches(self, batch_size, s1, s2, label, 
+                                      num_input_files)
     -- construct a tensor with all the data
 
     self.split_sizes = {}
@@ -100,7 +100,8 @@ function BatchLoader.make_all_batches(self, batch_size, s1, s2, label, num_input
        if len % (batch_size) ~= 0 then
           s1data = s1data:sub(1, batch_size * math.floor(len / batch_size))
           s2data = s2data:sub(1, batch_size * math.floor(len / batch_size))
-          label_data = label_data:sub(1, batch_size * math.floor(len / batch_size))   --let's just make the batch_size a multiplier of the test data size
+          --let's just make the batch_size a multiplier of the test data size
+          label_data = label_data:sub(1, batch_size * math.floor(len / batch_size)) 
        end
 
        s1_batches = s1data:split(batch_size,1)
@@ -128,11 +129,12 @@ end
 -- labels[split][s] is the label for the data point
 -- idx2word is the mapping from index to word
 -- word2idx is the mapping from words to index
---once tensors are produced from input text files, word2idx (and idx2word) are not needed
--- the model represents a sentence as a sequence of word indices, and has the mapping 
--- from word index to the corresponding embedding vector(word_vector)
+-- once tensors are produced from input text files, word2idx (and idx2word) 
+-- are not needed the model represents a sentence as a sequence of word indices, 
+-- and has the mapping rom word index to the corresponding embedding 
+-- vector(word_vector)
 
-function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
+function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab, mode)
     print('Processing text into tensors...')
 
     -- vocab is nil when running cold (not from a checkpoint)
@@ -141,7 +143,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
     local f
     local vocab_count = {} -- vocab count 
     local idx2word, word2idx
-    if scoring then
+    if mode~='train' then
        idx2word = vocab[1]
        word2idx = vocab[2]
     else 
@@ -182,7 +184,6 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
        -- split = 1 (train), 2 (val), or 3 (test)     
        -- Preallocate the tensors we will need.
        -- Watch out the second one needs a lot of RAM.
-
        -- vj: why is the value in the tensor a long, not an int?
 
        output_tensors1[split] = torch.ones(split_counts[split], max_sentence_l):long() 
@@ -207,7 +208,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
                 for rword in s1:gmatch'([^%s]+)' do
                    word_num = word_num + 1
                    if word2idx[rword]==nil then
-                      if scoring then
+                      if mode~='train' then
                          print('oov word ', rword, 'replacing with zero for now')
                          rword = 'ZERO'
                       else 
@@ -224,7 +225,7 @@ function BatchLoader.text_to_tensor(input_files, max_sentence_l, vocab)
                 for rword in s2:gmatch'([^%s]+)' do
                    word_num = word_num + 1
                    if word2idx[rword]==nil then
-                      if scoring then
+                      if mode~='train' then
                          print('oov word ', rword, 'replacing with zero for now')
                          rword = 'ZERO'
                       else 
@@ -247,7 +248,9 @@ end
 -- add them to word2idx (and idx2word). do not build tensors.
 -- this is called when we wish to bulk up word2idx with words that might be
 -- encountered during scoring.
-function ingest_vocab_words(vocab_files, idx2word, word2idx) 
+
+function ingest_vocab_words(vocab_files, idx2word, word2idx, mode) 
+   assert(mode=='train','vocab files can only be ingested during training from scratch')
    print('loading vocab files...')
    x = stringx.split(vocab_files, ' ')
    for	_, file in pairs(x) do
