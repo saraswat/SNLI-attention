@@ -1,0 +1,30 @@
+CSI format
+
+A CSI file is a text file, containing a series of lines. 
+
+A line beginning with '%' is a comment line and is ignored for training.
+
+Other lines are of the form:
+
+  id:String <TAB> T:String <TAB> H:String <TAB> L:String
+
+Strings are not permitted to contain embedded <TAB>s. 
+
+The processor must recognize the labels (L) entailment, contradiction,
+neutral, or -. (The last is understood as "ambiguous".) The label may
+also be empty (unknwown). 
+
+Label files
+
+Note that there is sometimes a need to process separate label
+files. These files are also text files with non-comment lines of the
+form:
+
+  id:String <TAB> L: String
+
+Flat files
+
+Sometimes there is a need to flatten out a CSI file. The flattened
+version of a CSI file can be thought of as being obtained by replacing
+<TAB>s with '\n'.
+
